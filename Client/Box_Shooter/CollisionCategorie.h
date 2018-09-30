@@ -1,3 +1,8 @@
+#pragma once
+
+#ifndef H_COLLISION
+#define H_COLLISION
+
 enum entityCategory
 {
 	BOUNDARY = 0x0001,
@@ -5,4 +10,7 @@ enum entityCategory
 	ENEMY_PLAYER = 0x0004,
 	FRIENDLY_ARROW = 0x0008,
 	ENEMY_ARROW = 0x0010,
+	ALL = BOUNDARY | FRIENDLY_PLAYER | ENEMY_PLAYER | FRIENDLY_ARROW | ENEMY_ARROW,
 };
+
+#endif

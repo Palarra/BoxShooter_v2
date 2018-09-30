@@ -21,8 +21,11 @@ public :
 
 	Arrow(b2Vec2 position, b2Vec2 velocity, b2World& physic_world, uint16 categoryBits, uint16 maskBits, Player &owner);
 	void update();
+	void startContact();
 	void startContact(Actor *player);
 	bool isAlive();
+	void setisAlive(bool alive);
+	int getId();
 	void destroy();
 };
 #endif

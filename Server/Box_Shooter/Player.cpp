@@ -1,14 +1,15 @@
 #include "Player.h"
 #include "CollisionCategorie.h"
 
-Player::Player(b2World& physic_world, std::string name, b2Vec2 position) : Actor(physic_world), m_cadence(15.0f), m_timer_fire(1 /m_cadence), m_timer_stun(0.35f)
+Player::Player(b2World& physic_world, std::string name, b2Vec2 position, entityCategory player_type, entityCategory arrow_type) : Actor(physic_world), m_cadence(10.0f), m_timer_fire(1 /m_cadence), m_timer_stun(0.35f)
 {
 	m_moveSpeed = 15;
 	m_isShooting = false;
 	m_isLoading = false;
 	m_isStun = false;
 	m_name = name;
-
+	m_playerType = player_type;
+	m_arrowType = arrow_type;
 
 	/* --- Physics settings --- */
 
@@ -22,7 +23,8 @@ Player::Player(b2World& physic_world, std::string name, b2Vec2 position) : Actor
 	fixtureDef.shape = &dynamicBox;
 	fixtureDef.density = 1.0f;
 	fixtureDef.friction = 0.0f;
-	fixtureDef.filter.categoryBits = ENEMY_PLAYER;
+	fixtureDef.filter.categoryBits = player_type;
+
 	bodyDef.fixedRotation = true;
 	body->CreateFixture(&fixtureDef);
 	body->SetUserData(this);
@@ -54,7 +56,7 @@ void Player::treatInputs()
 		
 		if (m_isShooting && m_timer_fire.isOver())
 		{
-			bullets.push_back(std::make_unique<Arrow>(b2Vec2(m_position.x + 60 * m_mouseDirection.x, m_position.y + 60 * m_mouseDirection.y), m_mouseDirection, m_physic_world, FRIENDLY_ARROW, ENEMY_ARROW | ENEMY_PLAYER, *this));
+			bullets.push_back(std::make_unique<Arrow>(b2Vec2(m_position.x + 60 * m_mouseDirection.x, m_position.y + 60 * m_mouseDirection.y), m_mouseDirection, m_physic_world, m_arrowType, (ALL & ~ (m_playerType | BOUNDARY | m_arrowType)), *this));
 		}
 		
 		if (m_isShooting || m_isLoading)
@@ -101,6 +103,11 @@ std::string Player::getPacketList()
 std::vector<std::unique_ptr<Arrow>>& Player::getArrowList()
 {
 	return bullets;
+}
+
+std::vector<int> Player::getArrowDeadList()
+{
+	return m_deadBullets;
 }
 
 std::vector<std::unique_ptr<LetalShoot>>& Player::getLetalList()
@@ -159,13 +166,6 @@ void Player::update()
 	m_velocity.x >= -0.01 && m_velocity.x <= 0.01 ? m_velocity.x = 0 : m_velocity.x = clamping * m_velocity.x; /* Si jamais la velocity est petite */
 	m_velocity.y >= -0.01 && m_velocity.y <= 0.01 ? m_velocity.y = 0 : m_velocity.y = clamping * m_velocity.y; /* on la remet à 0				   */
 	body->SetLinearVelocity(m_velocity);
-	/*
-	m_force.x >= -0.01 && m_force.x <= 0.01 ? m_force.x = 0 : m_force.x = clamping * m_force.x;
-	m_force.y >= -0.01 && m_force.y <= 0.01 ? m_force.y = 0 : m_force.y = clamping * m_force.y; 
-	body->ApplyForceToCenter(m_force, true);*/
-
-
-	//std::cout << "Position du player : " << m_position.x << " / " << m_position.y << std::endl;
 }
 
 void Player::draw(sf::RenderTarget &window)
@@ -204,6 +204,11 @@ bool Player::isAlive()
 	return m_isAlive;
 }
 
+bool Player::isLoading()
+{
+	return m_isLoading;
+}
+
 void Player::printInputs()
 {
 	for (int i = 0; i < m_input.size(); i++)
@@ -215,6 +220,16 @@ void Player::printInputs()
 void Player::setPacketToTreat(std::string packet)
 {
 	packetToThreat = packet;
+}
+
+void Player::startContact()
+{
+
+}
+
+void Player::resetDeadList()
+{
+	m_deadBullets.clear();
 }
 
 Player& operator >>(std::string& data, Player& character)
@@ -247,7 +262,7 @@ Player& operator >>(std::string& data, Player& character)
 	{
 		character.m_isShooting = false;
 	}
-	
+
 	i += 2;
 
 	if (data[i] == '1')
@@ -291,6 +306,5 @@ Player& operator >>(std::string& data, Player& character)
 		}
 		i++;
 	}
-
 	return character;
 }

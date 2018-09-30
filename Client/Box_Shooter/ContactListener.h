@@ -11,7 +11,7 @@ class MyContactListener : public b2ContactListener
 
 public:  
 
-	bool getArrowAndPlayer(b2Contact* contact, Actor*& radarEntity, Actor*& aircraftEntity);
+	int getArrowAndPlayer(b2Contact* contact, Actor*& radarEntity, Actor*& aircraftEntity);
 	void BeginContact(b2Contact* contact);
 };
 #endif

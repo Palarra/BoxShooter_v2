@@ -131,5 +131,4 @@ void DynamicSprite::reset()
 		}
 	}
 	/* --------------------------------------------------------- */
-	std::cout << "On reset le sprite !!" << std::endl;
 }

@@ -54,6 +54,11 @@ void Arrow::update()
 	}
 }
 
+void Arrow::startContact()
+{
+	m_isAlive = false;
+}
+
 void Arrow::startContact(Actor *player)
 {
 	Player *player_to_bump = static_cast <Player*>(player);
@@ -74,6 +79,11 @@ void Arrow::setisSend(bool send)
 bool Arrow::isSend()
 {
 	return m_isSend;
+}
+
+int Arrow::getId()
+{
+	return  m_id;
 }
 
 void Arrow::destroy()

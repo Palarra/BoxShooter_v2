@@ -1,8 +1,8 @@
 #include "World.h"
 
 World::World(sf::RenderWindow &window) : m_physic_world(b2World(b2Vec2(0.0f, 0.0f))), m_window(window) ,
-										 m_player1(Player(m_physic_world, "Antony", b2Vec2(200.0f, 100.0f))), 
-										 m_player2(Player(m_physic_world, "Armen", b2Vec2(800.0f, 700.0f)))							
+										 m_player1(Player(m_physic_world, "Antony", b2Vec2(200.0f, 100.0f), PLAYER_1, ARROW_1)), 
+										 m_player2(Player(m_physic_world, "Armen", b2Vec2(800.0f, 700.0f), PLAYER_2, ARROW_2))
 {
 	nbPlayers = 0;
 	initNetwork();
@@ -175,14 +175,15 @@ void World::update()
 	{
 		deltaTime = clock.restart().asSeconds();
 	
-		
+		sendAllClients(); /* Cette étape est faite avant pour éviter d'avoir un retard sur les clients du départ */
+
 		m_player1.update();
 		m_player1.draw(m_window);
 
 		m_player2.update();
 		m_player2.draw(m_window);
 		
-		sendAllClients(); /* Cette étape est faite avant pour éviter d'avoir un retard sur les clients du départ */
+		
 		m_physic_world.Step(deltaTime, velocityIterations, positionIterations);
 	}
 
@@ -272,7 +273,13 @@ void World::sendToClient1()
 
 	c1_packet_to_send2 += ';';
 
-	
+	if (m_player2.isLoading())
+		c1_packet_to_send2 += '1';
+	else
+		c1_packet_to_send2 += '0';
+
+	c1_packet_to_send2 += ';';
+
 	std::vector<std::unique_ptr<Arrow>>& bullets = m_player2.getArrowList();
 	for (int i = 0; i < bullets.size(); i++)
 	{
@@ -289,6 +296,7 @@ void World::sendToClient1()
 			bullets[i]->setisSend(true);
 		}
 	}
+
 	sendPacket(0, c1_packet_to_send2, client1);
 }
 
@@ -303,6 +311,7 @@ void World::sendToClient2()
 	c2_packet_to_send1 += ';';
 	c2_packet_to_send1 += std::to_string(client2_position.y);
 	c2_packet_to_send1 += ';';
+
 
 	sendPacket(0, c2_packet_to_send1, client2);
 
@@ -323,7 +332,12 @@ void World::sendToClient2()
 	c2_packet_to_send2 += std::to_string(mouseDirection.y);
 	c2_packet_to_send2 += ';';
 
+	if (m_player1.isLoading())
+		c2_packet_to_send2 += '1';
+	else
+		c2_packet_to_send2 += '0';
 
+	c2_packet_to_send2 += ';';
 	
 	std::vector<std::unique_ptr<Arrow>>& bullets = m_player1.getArrowList();
 	for (int i = 0; i < bullets.size(); i++)

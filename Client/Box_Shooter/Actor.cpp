@@ -25,6 +25,10 @@ void Actor::update()
 	m_Sprite.setPosition(m_position.x, m_position.y);
 }
 
+void Actor::startContact()
+{
+}
+
 void Actor::startContact(Actor * actor)
 {
 }

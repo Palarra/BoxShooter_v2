@@ -1,14 +1,17 @@
 #include "Player.h"
 #include "CollisionCategorie.h"
+#include <cstdlib>
 
-Player::Player(b2World& physic_world, std::string name) : Actor(physic_world), m_cadence(15.0f), m_timer_fire(1 /m_cadence), m_timer_stun(0.35f)
+Player::Player(b2World& physic_world, std::string name, entityCategory player_type, entityCategory arrow_type) : Actor(physic_world), m_cadence(10.0f), m_timer_fire(1 /m_cadence), m_timer_stun(0.35f)
 {
+	m_bullet_id = 0;
 	m_moveSpeed = 15;
 	m_isShooting = false;
 	m_isLoading = false;
 	m_isStun = false;
 	m_name = name;
-
+	m_playerType = player_type;
+	m_arrowType = arrow_type;
 
 	/* --- Physics settings --- */
 
@@ -22,7 +25,7 @@ Player::Player(b2World& physic_world, std::string name) : Actor(physic_world), m
 	fixtureDef.shape = &dynamicBox;
 	fixtureDef.density = 1.0f;
 	fixtureDef.friction = 0.0f;
-	fixtureDef.filter.categoryBits = ENEMY_PLAYER;
+	fixtureDef.filter.categoryBits = m_playerType;
 	bodyDef.fixedRotation = true;
 	body->CreateFixture(&fixtureDef);
 	body->SetUserData(this);
@@ -77,8 +80,11 @@ void Player::getMovement(sf::RenderWindow &window)
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && m_timer_fire.isOver())
 		{
 			m_isShooting = true;
+			m_bullet_id++;
+			m_bullet_id = m_bullet_id % 300;
+
 			if (!m_physic_world.IsLocked())
-				bullets.push_back(std::make_unique<Arrow>(b2Vec2(m_position.x + 60 * m_mouseDirection.x, m_position.y + 60 * m_mouseDirection.y), m_mouseDirection, m_physic_world, FRIENDLY_ARROW, ENEMY_ARROW | ENEMY_PLAYER, *this));
+				bullets.push_back(std::make_unique<Arrow>(b2Vec2(m_position.x + 60 * m_mouseDirection.x, m_position.y + 60 * m_mouseDirection.y), m_mouseDirection, m_physic_world, m_arrowType, (ALL & ~(m_playerType | BOUNDARY | m_arrowType)), *this));
 			m_input.push_back(LEFT_CLICK);
 		}
 
@@ -136,7 +142,12 @@ void Player::update()
 	{
 		m_loadingSprite.update(sf::Vector2f(m_position.x, m_position.y));
 	}
-		
+	else
+	{
+		m_loadingSprite.reset();
+	}
+
+
 	if (m_timer_stun.isOver())
 	{
 		m_isStun = false;
@@ -167,7 +178,7 @@ void Player::update()
 
 	for (int i = 0; i < bulletsToCreate.size(); i+=2)
 	{
-		bullets.push_back(std::make_unique<Arrow>(b2Vec2(bulletsToCreate[i].x, bulletsToCreate[i].y), bulletsToCreate[i + 1], m_physic_world, FRIENDLY_ARROW, ENEMY_ARROW | ENEMY_PLAYER, *this));
+		bullets.push_back(std::make_unique<Arrow>(b2Vec2(bulletsToCreate[i].x, bulletsToCreate[i].y), bulletsToCreate[i + 1], m_physic_world, m_arrowType, (ALL & ~(m_playerType | BOUNDARY | m_arrowType)), *this));
 	}
 	bulletsToCreate.clear();
 }
@@ -197,9 +208,11 @@ void Player::draw(sf::RenderTarget &window)
 
 void Player::bump(b2Vec2 velocity, float force)
 {
+	/*
 	m_isStun = true;
 	m_timer_stun.refresh();
 	m_velocity = b2Vec2(velocity.x * force, velocity.y * force);
+	*/
 }
 
 bool Player::isAlive()
@@ -248,6 +261,8 @@ void Player::extractDataPlayer(std::string data) // ex : id;pos_x;pos_y;
 	}
 	position.y = std::stof(position_y);
 	m_position_server = position;
+
+	i++;
 }
 
 void Player::extractDataEnnemyPlayer(std::string data) // ex : id;pos_x;pox_y;
@@ -290,11 +305,25 @@ void Player::extractDataEnnemyPlayer(std::string data) // ex : id;pos_x;pox_y;
 	mouseDirection.y = std::stof(mouse_y);
 
 	m_mouseDirection = mouseDirection;
+
 	i++;
 
+	if (data[i] == '1')
+		m_isLoading = true;
+	else if (data[i] == '0' && m_isLoading)
+	{
+		m_isLoading = false;
+		m_loadingSprite.reset();
+	}
+	else /* Je pense que ce else ne sert pas à grand chose et que le else ferait l'affaire tout seul */
+	{
+		m_isLoading = false;
+	}
+
+	i+= 2;
 
 	/* Projectiles : */
-	while (i < data.size() - 1)
+	while (i < data.size() - 1 && data[i] != 'b')
 	{
 		b2Vec2 position_bullet;
 		std::string bullet_x, bullet_y;

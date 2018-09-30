@@ -1,8 +1,8 @@
 #include "World.h"
 
 World::World(sf::RenderWindow &window) : m_physic_world(b2World(b2Vec2(0.0f, 0.0f))), m_window(window) ,
-										 m_player(Player(m_physic_world, "Antony")), 
-										 m_ennemy_player(Player(m_physic_world, "Armen"))
+										 m_player(Player(m_physic_world, "Antony", FRIENDLY_PLAYER, FRIENDLY_ARROW)), 
+										 m_ennemy_player(Player(m_physic_world, "Armen", ENEMY_PLAYER, ENEMY_ARROW))
 {
 	bool connected = false;
 	std::cout << "Taper votre ip :" << std::endl;

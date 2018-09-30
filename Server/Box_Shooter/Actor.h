@@ -13,6 +13,8 @@ class Actor
 {
 protected :
 
+	int m_id;
+
 	float m_moveSpeed;
 	float deltaTime;
 
@@ -37,6 +39,7 @@ public :
 
 	Actor(b2World& physic_world);
 	virtual void update();
+	virtual void startContact();
 	virtual void startContact(Actor *actor);
 	b2Vec2 getPosition();
 	b2Vec2 getVelocity();

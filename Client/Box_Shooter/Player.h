@@ -7,16 +7,21 @@
 #include "LetalShoot.h"
 #include "DynamicSprite.h"
 #include "InputType.h"
+#include "CollisionCategorie.h"
 
 
 class Player: public Actor
 {
 private:
 	int p_id;
+	int m_bullet_id;
 
 	std::vector<std::unique_ptr<Arrow>> bullets;
 	std::vector<b2Vec2> bulletsToCreate;
 	std::vector<std::unique_ptr<LetalShoot>> letals;
+
+	entityCategory m_playerType;
+	entityCategory m_arrowType;
 
 	bool m_isAlive;
 	bool m_isShooting;
@@ -41,7 +46,7 @@ private:
 
 
 public:
-	Player(b2World& physic_world, std::string name);
+	Player(b2World& physic_world, std::string name, entityCategory player_type, entityCategory arrow_type);
 	void getMovement(sf::RenderWindow &window); /* A renommer get et ne renvoie rien (mettre input à la place) */
 	std::vector<std::unique_ptr<Arrow>>& getArrowList();
 	std::vector<std::unique_ptr<LetalShoot>>& getLetalList();
